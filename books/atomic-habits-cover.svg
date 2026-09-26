@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900" role="img" aria-labelledby="title description">
+  <title id="title">Atomic Habits by James Clear</title>
+  <description id="description">Cream book cover with a gold dotted title</description>
+  <defs>
+    <pattern id="gold-dots" width="8" height="8" patternUnits="userSpaceOnUse">
+      <circle cx="2.4" cy="2.4" r="2.15" fill="#b99a32"/>
+    </pattern>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f3e6"/>
+      <stop offset="1" stop-color="#eee5d3"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="900" rx="8" fill="url(#paper)"/>
+  <rect x="22" y="22" width="556" height="856" rx="4" fill="none" stroke="#d8cfbd" stroke-width="2"/>
+  <text x="300" y="82" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2" fill="#2d302e">#1 NEW YORK TIMES BESTSELLER</text>
+  <text x="300" y="154" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="4" fill="#77746c">TINY CHANGES</text>
+  <text x="300" y="186" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="4" fill="#77746c">REMARKABLE RESULTS</text>
+  <text x="62" y="337" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="104" font-weight="900" letter-spacing="-4" fill="url(#gold-dots)">ATOMIC</text>
+  <text x="62" y="448" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="104" font-weight="900" letter-spacing="-4" fill="url(#gold-dots)">HABITS</text>
+  <circle cx="477" cy="520" r="60" fill="#bf9e36"/>
+  <circle cx="477" cy="520" r="51" fill="none" stroke="#f8f3e6" stroke-width="2" stroke-dasharray="3 5"/>
+  <text x="477" y="502" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#fffaf0">SMALL STEPS</text>
+  <text x="477" y="523" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#fffaf0">EVERY</text>
+  <text x="477" y="544" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#fffaf0">DAY</text>
+  <text x="64" y="584" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#292d2b">AN EASY &amp; PROVEN WAY TO</text>
+  <text x="64" y="621" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#292d2b">BUILD GOOD HABITS &amp;</text>
+  <text x="64" y="658" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#292d2b">BREAK BAD ONES</text>
+  <line x1="64" y1="718" x2="536" y2="718" stroke="#cfc5b1" stroke-width="2"/>
+  <text x="64" y="800" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="53" font-weight="900" letter-spacing="2" fill="#272b29">JAMES CLEAR</text>
+</svg>
