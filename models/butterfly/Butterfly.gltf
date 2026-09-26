@@ -3241,9 +3241,9 @@
 	],
 	"images":[
 		{
-			"mimeType":"image/png",
+			"mimeType":"image/webp",
 			"name":"Butterfly2",
-			"uri":"Butterfly2.png"
+			"uri":"Butterfly2.webp"
 		}
 	],
 	"skins":[
