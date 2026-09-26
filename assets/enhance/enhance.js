@@ -329,6 +329,61 @@
   };
   if (window.__alexWorldCtx) window.__alexWorld.init(window.__alexWorldCtx);
 
+  /* ?debug=1 shows a live diagnostics panel (for tracking down browser-specific problems) */
+  if (/[?&]debug=1\b/.test(window.location.search)) startDebugPanel();
+  function startDebugPanel() {
+    const errors = [];
+    const push = (msg) => errors.length < 12 && errors.push(String(msg).slice(0, 240));
+    window.addEventListener("error", (e) => push("error: " + e.message + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));
+    window.addEventListener("unhandledrejection", (e) => push("rejection: " + (e.reason && e.reason.message ? e.reason.message : e.reason)));
+    const origError = console.error;
+    console.error = function patched() {
+      push("console: " + Array.from(arguments).map(String).join(" "));
+      return origError.apply(console, arguments);
+    };
+    let contextLost = 0;
+    let lastFrames = 0;
+    let fps = 0;
+    const panel = document.createElement("pre");
+    panel.style.cssText =
+      "position:fixed;z-index:2147483647;left:8px;top:8px;max-width:min(560px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;margin:0;padding:10px 12px;font:11px/1.45 ui-monospace,Menlo,monospace;color:#e8f3ec;background:rgba(10,20,16,.88);border-radius:10px;white-space:pre-wrap;pointer-events:auto;user-select:text";
+    const render = () => {
+      if (!panel.isConnected && document.body) document.body.appendChild(panel);
+      const ctx = world.ctx;
+      const lines = ["alex-world debug", "ua: " + navigator.userAgent, "dpr: " + window.devicePixelRatio + "  viewport: " + innerWidth + "x" + innerHeight];
+      lines.push("classes: " + root.className);
+      const shell = document.querySelector(".site-shell");
+      lines.push("ready: " + !!(shell && shell.classList.contains("is-world-ready")) + "  fallback: " + !!document.querySelector(".world-fallback") + "  loader hidden: " + !!document.querySelector(".loader.is-hidden"));
+      const canvas = document.querySelector(".world-canvas canvas");
+      if (canvas) {
+        const r = canvas.getBoundingClientRect();
+        const cs = getComputedStyle(canvas);
+        lines.push("canvas: css " + Math.round(r.width) + "x" + Math.round(r.height) + " buffer " + canvas.width + "x" + canvas.height + " display " + cs.display + " vis " + cs.visibility + " op " + cs.opacity);
+      } else lines.push("canvas: none");
+      if (ctx) {
+        const gl = ctx.renderer.getContext();
+        fps = world.frames - lastFrames;
+        lastFrames = world.frames;
+        const info = ctx.renderer.info;
+        lines.push("webgl2: " + (typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext) + "  lost: " + gl.isContextLost() + " (events " + contextLost + ")");
+        lines.push("frames: " + world.frames + "  fps~" + fps + "  drawn: " + !!world.drawn + "  intro: " + world.intro.state + "  noTilt: " + !!world.noTilt + "  broken: " + world.broken);
+        const composer = ctx.composer && ctx.composer();
+        lines.push("composer: " + (composer ? composer.passes.map((p) => p.constructor.name || "pass").join(" > ") : "none (quality low)"));
+        lines.push("render: calls " + info.render.calls + " tris " + info.render.triangles + "  textures " + info.memory.textures + "  programs " + info.programs.length);
+        info.programs
+          .filter((p) => p.diagnostics && p.diagnostics.runnable === false)
+          .forEach((p) => lines.push("FAILED program " + p.name + ": " + ((p.diagnostics.fragmentShader && p.diagnostics.fragmentShader.log) || p.diagnostics.programLog || "").slice(0, 300)));
+      } else lines.push("3D context: not initialised");
+      if (errors.length) lines.push("errors:\n  " + errors.join("\n  "));
+      panel.textContent = lines.join("\n");
+      if (ctx && !render.hooked) {
+        render.hooked = true;
+        ctx.renderer.domElement.addEventListener("webglcontextlost", () => (contextLost += 1));
+      }
+    };
+    setInterval(render, 1000);
+  }
+
   // If the world never manages to draw (lost GPU, blocked WebGL), stop holding the poster.
   setTimeout(() => {
     if (!world.drawn) {
