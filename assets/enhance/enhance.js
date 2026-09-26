@@ -70,7 +70,52 @@
     chimney: { corners: null, rect: null },
     tilt: 0,
     lastTime: performance.now(),
+    frames: 0,
+    broken: false,
   };
+
+  // Never let a presentation effect take the 3D world down with it.
+  function reportOnce(label, error) {
+    if (world.broken) return;
+    world.broken = true;
+    root.classList.remove("alx-intro-running");
+    root.classList.add("alx-intro-done", "alx-drawn");
+    if (window.console) console.error("[alex-world] " + label + " disabled:", error);
+  }
+  const guard = (label, fn) =>
+    function guarded() {
+      if (world.broken) return undefined;
+      try {
+        return fn.apply(this, arguments);
+      } catch (error) {
+        reportOnce(label, error);
+        return undefined;
+      }
+    };
+
+  // Some GPU drivers reject shaders that others accept. If the colour-grade pass (which also
+  // carries the tilt-shift) fails to compile, drop the tilt-shift and recompile the original grade.
+  const TILT_BLOCK = /\/\*ALX_TILT\*\/[\s\S]*?\/\*ALX_TILT_END\*\//;
+  const reportedPrograms = new WeakSet();
+  function checkShaders(ctx) {
+    const programs = (ctx.renderer.info && ctx.renderer.info.programs) || [];
+    const failed = programs.filter(
+      (p) => p.diagnostics && p.diagnostics.runnable === false && !reportedPrograms.has(p),
+    );
+    if (!failed.length) return false;
+    failed.forEach((p) => reportedPrograms.add(p));
+    const grade = ctx.grade && ctx.grade();
+    const material = grade && grade.material;
+    if (material && TILT_BLOCK.test(material.fragmentShader)) {
+      material.fragmentShader = material.fragmentShader.replace(TILT_BLOCK, "");
+      material.needsUpdate = true;
+      world.noTilt = true;
+      if (window.console) console.warn("[alex-world] tilt-shift shader rejected by this GPU; using the plain grade");
+      return true;
+    }
+    if (window.console) console.warn("[alex-world] shader programs failed:", failed.map((p) => p.name).join(", "));
+    return false;
+  }
 
   function modalOpen() {
     return !!document.querySelector(".modal-backdrop, .home-return-transition, .language-transition");
@@ -105,7 +150,7 @@
     const intro = world.intro;
     if (intro.state === "waiting") {
       if (!world.shell) world.shell = document.querySelector(".site-shell");
-      const ready = world.shell && world.shell.classList.contains("is-world-ready");
+      const ready = world.shell && world.shell.classList.contains("is-world-ready") && world.drawn;
       if (!ready) {
         intro.sawLoading = true;
         return 0;
@@ -190,9 +235,19 @@
     if (!ctx) return;
     const cam = ctx.camera;
 
+    // The frame hook runs just before each render, so by the 3rd call at least two frames are on screen.
+    world.frames += 1;
+    if (world.frames === 3 || world.frames === 40 || world.frames === 200) {
+      if (checkShaders(ctx)) world.frames = 0;
+    }
+    if (!world.drawn && world.frames >= 3) {
+      world.drawn = true;
+      root.classList.add("alx-drawn");
+    }
+
     // Tilt-shift "miniature" focus on the exterior establishing shots.
     const grade = ctx.grade && ctx.grade();
-    if (grade && grade.uniforms && grade.uniforms.tilt) {
+    if (grade && grade.uniforms && grade.uniforms.tilt && !world.noTilt) {
       const running = world.intro.state === "running";
       const exterior = 1 - smooth(0.025, 0.1, progress);
       const returning = smooth(0.962, 0.996, progress);
@@ -267,8 +322,20 @@
     if (sound.enabled) sound.update(progress, night);
   }
 
-  window.__alexWorld = { init, camera, frame };
-  if (window.__alexWorldCtx) init(window.__alexWorldCtx);
+  window.__alexWorld = {
+    init: guard("init", init),
+    camera: guard("camera", camera),
+    frame: guard("frame", frame),
+  };
+  if (window.__alexWorldCtx) window.__alexWorld.init(window.__alexWorldCtx);
+
+  // If the world never manages to draw (lost GPU, blocked WebGL), stop holding the poster.
+  setTimeout(() => {
+    if (!world.drawn) {
+      world.drawn = true;
+      root.classList.add("alx-drawn");
+    }
+  }, 15000);
 
   window.addEventListener(
     "pointermove",
