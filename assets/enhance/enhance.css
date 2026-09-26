@@ -1,0 +1,885 @@
+/*
+ * Alex's Little World — presentation layer (loaded after the Next.js CSS).
+ * Typography, calmer UI chrome, poster loader. See ENHANCEMENTS.md.
+ */
+
+@font-face {
+  font-family: "Alex Serif";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(../fonts/noto-serif-sc-500.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Alex Serif";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(../fonts/noto-serif-sc-700.woff2) format("woff2");
+}
+
+:root {
+  --alx-serif: "Alex Serif", "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+  --alx-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", "Segoe UI", system-ui, sans-serif;
+  --alx-ink: #1e2a25;
+  --alx-ink-soft: rgba(30, 42, 37, 0.7);
+  --alx-ink-faint: rgba(30, 42, 37, 0.46);
+  --alx-accent: #2d6a53;
+  --alx-paper: rgba(251, 247, 239, 0.84);
+  --alx-line: rgba(30, 42, 37, 0.12);
+  --alx-glass: rgba(251, 247, 239, 0.72);
+  --alx-shadow: 0 18px 50px rgba(34, 44, 38, 0.16);
+  --alx-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+body,
+html,
+.scene-layer {
+  background: #d8d3c4;
+}
+
+.site-shell,
+.site-shell[data-language="de"],
+.site-shell[data-language="en"] {
+  font-family: var(--alx-sans);
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- Display type: one serif, everywhere ---------- */
+
+:root .site-shell[data-language] .hero-copy h1,
+:root .site-shell[data-language] .stop-caption-title,
+:root .site-shell[data-language] .story-card h2,
+:root .site-shell[data-language] .section-heading h2,
+:root .site-shell[data-language] .backyard-copy h2,
+:root .site-shell[data-language] .letter-modal h2,
+:root .site-shell[data-language] .memory-modal-copy h2,
+:root .site-shell[data-language] .photo-viewer figcaption strong {
+  font-family: var(--alx-serif);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+/* Chinese headings break at punctuation, never inside a word like 仍然 */
+:root .site-shell[data-language="zh"] .stop-caption-title,
+:root .site-shell[data-language="zh"] .story-card h2,
+:root .site-shell[data-language="zh"] .section-heading h2,
+:root .site-shell[data-language="zh"] .backyard-copy h2,
+:root .site-shell[data-language="zh"] .letter-modal h2,
+:root .site-shell[data-language="zh"] .memory-modal-copy h2 {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+:root .site-shell[data-language="en"] .hero-copy h1,
+:root .site-shell[data-language="de"] .hero-copy h1,
+:root .site-shell[data-language="en"] .story-card h2,
+:root .site-shell[data-language="de"] .story-card h2,
+:root .site-shell[data-language="en"] .backyard-copy h2,
+:root .site-shell[data-language="de"] .backyard-copy h2 {
+  letter-spacing: -0.025em;
+}
+:root .site-shell[data-language] .hand-note,
+:root .site-shell[data-language] .memory-modal-copy blockquote,
+:root .site-shell[data-language] .letter-sign,
+:root .site-shell[data-language] .hero-sticker {
+  font-family: var(--alx-serif);
+}
+
+/* ---------- Hero: no boxes, just type on light ---------- */
+
+.hero-sticker {
+  display: none;
+}
+/* the soft light behind the hero text must never widen the page (mobile layout viewport) */
+.story-flow {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+.hero-copy {
+  filter: none;
+}
+/* soft light behind the words: a blurred shape (a big radial gradient left a hairline seam) */
+.hero-copy:before {
+  inset: -6% -16% -8% -12%;
+  background: rgba(250, 246, 236, 0.66);
+  border-radius: 46%;
+  filter: blur(56px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.is-night .hero-copy:before {
+  background: rgba(14, 30, 38, 0.52);
+}
+.eyebrow {
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 0;
+  color: var(--alx-accent);
+  background: none;
+  border: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.eyebrow-dot {
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+  border-radius: 0;
+  box-shadow: none;
+}
+:root .site-shell[data-language] .hero-copy h1 {
+  color: var(--alx-ink);
+  font-size: clamp(46px, 4.6vw, 84px);
+  line-height: 1.14;
+}
+:root .site-shell[data-language] .hero-copy h1 span {
+  color: var(--alx-accent);
+  text-shadow: none;
+  white-space: normal;
+}
+.hero-copy h1 span:after {
+  display: none;
+}
+.hero-copy > p {
+  max-width: 30em;
+  margin: 26px 0 34px;
+  padding: 0;
+  color: var(--alx-ink-soft);
+  background: none;
+  font-size: clamp(15px, 1.12vw, 17px);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.95;
+  text-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.scroll-invite {
+  gap: 14px;
+  color: var(--alx-ink);
+}
+.scroll-icon {
+  width: 42px;
+  height: 42px;
+  color: var(--alx-ink);
+  background: transparent;
+  border: 1px solid rgba(30, 42, 37, 0.28);
+  box-shadow: none;
+}
+.scroll-invite b {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.scroll-invite small {
+  display: none;
+}
+.is-night .eyebrow,
+.is-night .scroll-invite,
+.is-night .scroll-icon {
+  color: #f4ecd6;
+}
+.is-night .scroll-icon {
+  border-color: rgba(244, 236, 214, 0.36);
+}
+:root .site-shell.is-night[data-language] .hero-copy h1 {
+  color: #f7efd9;
+  text-shadow: 0 2px 18px rgba(8, 20, 26, 0.35);
+}
+:root .site-shell.is-night[data-language] .hero-copy h1 span {
+  color: #ffd98e;
+}
+.is-night .hero-copy > p {
+  color: rgba(247, 239, 217, 0.82);
+  background: none;
+}
+
+/* Latin headlines are wider than CJK ones: give them room so "This is my world." stays on one line */
+@media (min-width: 681px) {
+  .site-shell[data-language="en"] .hero-copy,
+  .site-shell[data-language="de"] .hero-copy {
+    width: clamp(440px, 40vw, 660px);
+  }
+  :root .site-shell[data-language="en"] .hero-copy h1,
+  :root .site-shell[data-language="de"] .hero-copy h1 {
+    font-size: clamp(42px, 3.9vw, 72px);
+    line-height: 1.1;
+    text-wrap: pretty;
+  }
+}
+
+/* The camera flies in first; the words arrive once it lands. */
+html.alx-world-live:not(.alx-intro-done) .hero-section .hero-copy > *,
+html.alx-world-live:not(.alx-intro-done) .topbar,
+html.alx-world-live:not(.alx-intro-done) .mailbox-button {
+  opacity: 0 !important;
+  animation: none !important;
+}
+html.alx-intro-done .is-world-ready .hero-section .hero-copy > * {
+  animation: alx-rise 1.1s var(--alx-ease) both;
+}
+html.alx-intro-done .is-world-ready .hero-section .hero-copy > h1 {
+  animation-delay: 0.12s;
+}
+html.alx-intro-done .is-world-ready .hero-section .hero-copy > p {
+  animation-delay: 0.28s;
+}
+html.alx-intro-done .is-world-ready .hero-section .hero-copy > .scroll-invite {
+  animation-delay: 0.42s;
+}
+html.alx-world-live .topbar,
+html.alx-world-live .mailbox-button {
+  transition: opacity 0.9s ease 0.2s;
+}
+@keyframes alx-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* ---------- Top bar: brand + sound + menu ---------- */
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--alx-ink);
+  background: var(--alx-glass);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(34, 44, 38, 0.1);
+  transform: none;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.brand-icon svg {
+  width: 18px;
+  stroke-width: 1.6;
+}
+.brand {
+  color: var(--alx-ink);
+  filter: none;
+}
+.brand b {
+  font-family: var(--alx-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.brand small {
+  color: var(--alx-ink-faint);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+}
+.is-night .brand-icon {
+  color: #f4ecd6;
+  background: rgba(20, 38, 46, 0.62);
+  border-color: rgba(255, 245, 212, 0.16);
+}
+
+.scroll-line {
+  height: 2px;
+}
+.scroll-line span {
+  background: linear-gradient(90deg, rgba(45, 106, 83, 0.15), rgba(45, 106, 83, 0.75));
+  box-shadow: none;
+}
+.is-night .scroll-line span {
+  background: linear-gradient(90deg, rgba(255, 217, 142, 0.15), rgba(255, 217, 142, 0.8));
+}
+
+.alx-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+.alx-icon-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  color: var(--alx-ink);
+  background: var(--alx-glass);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(34, 44, 38, 0.12);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition:
+    transform 0.25s var(--alx-ease),
+    background 0.25s ease;
+}
+.alx-icon-button:hover {
+  background: rgba(251, 247, 239, 0.95);
+  transform: translateY(-1px);
+}
+.alx-icon-button svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+.alx-sound[aria-pressed="true"] {
+  color: var(--alx-accent);
+}
+.is-night .alx-icon-button {
+  color: #f4ecd6;
+  background: rgba(20, 38, 46, 0.62);
+  border-color: rgba(255, 245, 212, 0.16);
+}
+
+html.alx-ui .topbar {
+  align-items: center;
+}
+html.alx-ui .top-actions {
+  position: absolute;
+  top: calc(100% - 10px);
+  right: clamp(22px, 4.5vw, 72px);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 232px;
+  padding: 8px;
+  background: rgba(251, 247, 239, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: var(--alx-shadow);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(0, -6px, 0) scale(0.98);
+  transform-origin: top right;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  transition:
+    opacity 0.22s ease,
+    transform 0.3s var(--alx-ease),
+    visibility 0s linear 0.3s;
+}
+html.alx-ui.alx-menu-open .top-actions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    opacity 0.22s ease,
+    transform 0.3s var(--alx-ease),
+    visibility 0s;
+}
+html.alx-ui .top-actions .language-switcher {
+  order: 9;
+  height: 40px;
+  margin-top: 6px;
+  padding: 4px;
+  background: rgba(30, 42, 37, 0.05);
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html.alx-ui .top-actions .language-switcher button {
+  flex: 1;
+  height: 32px;
+  color: var(--alx-ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+}
+html.alx-ui .top-actions .language-switcher button.is-active {
+  color: #fbf7ef;
+  background: var(--alx-ink);
+  box-shadow: none;
+}
+html.alx-ui .top-actions .round-action {
+  width: 100%;
+  height: 44px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 0 12px;
+  color: var(--alx-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html.alx-ui .top-actions .round-action:hover {
+  background: rgba(30, 42, 37, 0.06);
+  transform: none;
+}
+html.alx-ui .top-actions .round-action span {
+  display: inline;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+/* the easter egg lives on the chimney now; keep the button for keyboard + screen readers */
+html.alx-ui .top-actions .secret-action {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html.alx-ui .top-actions .secret-action:focus-visible {
+  position: static !important;
+  width: 100% !important;
+  height: 44px !important;
+  clip: auto;
+  clip-path: none;
+}
+html.alx-ui .is-night .top-actions {
+  background: rgba(18, 34, 42, 0.92);
+  border-color: rgba(255, 245, 212, 0.12);
+}
+html.alx-ui .is-night .top-actions .round-action,
+html.alx-ui .is-night .top-actions .language-switcher button {
+  color: #f4ecd6;
+}
+html.alx-ui .is-night .top-actions .language-switcher {
+  background: rgba(255, 245, 212, 0.08);
+}
+html.alx-ui .is-night .top-actions .language-switcher button.is-active {
+  color: #172a30;
+  background: #f4ecd6;
+}
+
+.alx-chimney-tip {
+  position: fixed;
+  z-index: 95;
+  top: 0;
+  left: 0;
+  padding: 7px 12px;
+  color: var(--alx-ink);
+  background: rgba(251, 247, 239, 0.94);
+  border-radius: 999px;
+  box-shadow: 0 10px 26px rgba(34, 44, 38, 0.16);
+  font-family: var(--alx-serif);
+  font-size: 13px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+html.alx-over-chimney .alx-chimney-tip {
+  opacity: 1;
+}
+html.alx-over-chimney,
+html.alx-over-chimney body,
+html.alx-over-chimney .hero-section {
+  cursor: pointer;
+}
+
+/* ---------- Stop captions ---------- */
+
+.stop-caption-card {
+  padding: 20px 22px 20px;
+}
+.stop-caption-card:before {
+  background: var(--alx-paper);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+  box-shadow: var(--alx-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  backdrop-filter: blur(18px) saturate(1.1);
+}
+.stop-caption-index {
+  gap: 10px;
+  padding: 0;
+  color: var(--alx-accent);
+  background: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+}
+.stop-caption-index:before {
+  width: 18px;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+:root .site-shell[data-language] .stop-caption-title {
+  margin: 12px 0 16px;
+  color: var(--alx-ink);
+  font-size: clamp(21px, 1.7vw, 28px);
+  line-height: 1.32;
+}
+:root .site-shell[data-language] .stop-caption-title span {
+  color: var(--alx-accent);
+}
+.stop-caption-action {
+  gap: 10px;
+  padding: 10px 16px;
+  color: #fbf7ef;
+  background: var(--alx-ink);
+  box-shadow: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.stop-caption-action:hover {
+  background: #0f1814;
+}
+.stop-caption-dot {
+  display: none;
+}
+.is-night .stop-caption-card:before {
+  background: rgba(18, 34, 42, 0.84);
+  border-color: rgba(255, 245, 212, 0.12);
+}
+.is-night .stop-caption-index {
+  color: #ffd98e;
+  background: none;
+}
+:root .site-shell.is-night[data-language] .stop-caption-title {
+  color: #f7efd9;
+}
+:root .site-shell.is-night[data-language] .stop-caption-title span {
+  color: #ffd98e;
+}
+.is-night .stop-caption-action {
+  color: #172a30;
+  background: #f4ecd6;
+}
+
+/* ---------- Mailbox ---------- */
+
+.mailbox-button {
+  gap: 10px;
+  padding: 5px 16px 5px 5px;
+  color: var(--alx-ink);
+  background: var(--alx-glass);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 24px rgba(34, 44, 38, 0.12);
+}
+.mailbox-button:hover {
+  transform: translateY(-2px);
+}
+.mail-flag {
+  display: none;
+}
+.mailbox-shape {
+  width: 32px;
+  height: 32px;
+  background: #c8674f;
+  border-radius: 50%;
+  box-shadow: none;
+  font-size: 12px;
+}
+.mail-label {
+  font-family: var(--alx-serif);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.is-night .mailbox-button {
+  color: #f4ecd6;
+  background: rgba(20, 38, 46, 0.62);
+  border-color: rgba(255, 245, 212, 0.16);
+}
+.secret-toast {
+  color: var(--alx-ink);
+  font-family: var(--alx-serif);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------- Dialogs: fewer boxes, more air ---------- */
+
+.scene-panel-dialog {
+  border-radius: 26px;
+}
+.story-card {
+  border-radius: 26px;
+  background: rgba(251, 247, 239, 0.95);
+}
+.story-card:before,
+.letter-modal:before {
+  display: none;
+}
+.hand-note,
+.hand-note.coral-note,
+.hand-note.yellow-note,
+.hand-note.blue-note {
+  margin: 20px 0 8px;
+  padding: 0;
+  color: var(--alx-accent);
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  transform: none;
+}
+.card-index,
+.letter-kicker,
+.memory-modal-copy > small {
+  color: var(--alx-ink-faint);
+  font-weight: 600;
+  letter-spacing: 0.24em;
+}
+/* labels that sit on the dark green panels (album, dream tree) */
+.card-index.light-index {
+  color: rgba(255, 250, 240, 0.62);
+}
+.hand-note.yellow-note {
+  color: #ffd98e;
+}
+:root .site-shell[data-language] .story-card h2 {
+  color: var(--alx-ink);
+  line-height: 1.16;
+}
+.about-card h2 span {
+  color: var(--alx-accent);
+}
+.story-card > p:not(.hand-note),
+.future-card > p:not(.hand-note) {
+  color: var(--alx-ink-soft);
+  font-size: 15px;
+  line-height: 1.95;
+}
+.backyard-copy > p:not(.hand-note) {
+  color: rgba(255, 250, 240, 0.78);
+  font-size: 15px;
+  line-height: 1.95;
+}
+.lead-copy b {
+  color: var(--alx-ink);
+  border-bottom: 1px solid rgba(45, 106, 83, 0.35);
+}
+.profile-grid {
+  gap: 0 28px;
+  margin-top: 8px;
+}
+.profile-grid article {
+  min-height: 0;
+  padding: 16px 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--alx-line);
+  border-radius: 0;
+}
+.profile-icon {
+  display: none;
+}
+.profile-grid small {
+  margin-bottom: 6px;
+  color: var(--alx-ink-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+}
+.profile-grid strong {
+  color: var(--alx-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.editable-hint {
+  margin-top: 22px;
+  padding: 16px 0 0;
+  color: var(--alx-ink-faint);
+  background: none;
+  border-top: 1px solid var(--alx-line);
+  border-radius: 0;
+  font-family: var(--alx-serif);
+  font-size: 13px;
+  font-weight: 500;
+}
+.editable-hint span {
+  display: none;
+}
+
+.letter-modal {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 35px, rgba(78, 104, 92, 0.05) 35px 36px),
+    #fbf7ef;
+  border-radius: 6px 28px 6px 28px;
+}
+:root .site-shell[data-language] .letter-modal h2 {
+  margin: 14px 0 24px;
+  color: var(--alx-ink);
+  font-size: clamp(28px, 3.3vw, 42px);
+  line-height: 1.3;
+}
+.letter-modal > p:not(.letter-kicker, .letter-sign) {
+  color: var(--alx-ink-soft);
+  font-size: 15px;
+  line-height: 2.05;
+}
+.letter-sign {
+  color: var(--alx-accent);
+  font-size: 18px;
+}
+:root .site-shell[data-language] .memory-modal-copy h2 {
+  color: var(--alx-ink);
+  line-height: 1.28;
+}
+.memory-modal-copy blockquote {
+  color: var(--alx-accent);
+  font-size: 17px;
+  line-height: 1.85;
+}
+.memory-modal-copy > p {
+  color: var(--alx-ink-soft);
+  font-size: 13.5px;
+  line-height: 1.95;
+}
+
+/* ---------- Loader: open on a painting of the world, not a blank page ---------- */
+
+.loader {
+  z-index: 80;
+  align-content: end;
+  padding-bottom: clamp(36px, 9vh, 88px);
+  color: #fbf7ef;
+  background-color: #cfd3c7;
+  background-image: url(poster-wide.webp);
+  background-position: center;
+  background-size: auto 100%;
+  transition:
+    opacity 1.1s ease,
+    visibility 1.1s ease;
+}
+@media (min-aspect-ratio: 11/5) {
+  .loader {
+    background-size: cover;
+  }
+}
+@media (max-width: 680px) {
+  .loader {
+    background-image: url(poster-tall.webp);
+  }
+}
+@media (max-width: 680px) and (min-aspect-ratio: 1/1) {
+  .loader {
+    background-size: cover;
+  }
+}
+.loader:before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(20, 30, 26, 0) 55%, rgba(20, 30, 26, 0.34)),
+    radial-gradient(ellipse at 50% 40%, rgba(250, 244, 232, 0) 30%, rgba(250, 244, 232, 0.35) 100%);
+  content: "";
+}
+.loader-house {
+  display: none;
+}
+.loader p {
+  position: relative;
+  font-family: var(--alx-serif);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-shadow: 0 1px 12px rgba(20, 30, 26, 0.4);
+}
+.loader p:after {
+  display: block;
+  width: 120px;
+  height: 1px;
+  margin: 16px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(251, 247, 239, 0.95), transparent);
+  background-size: 200% 100%;
+  animation: alx-loading 1.8s ease-in-out infinite;
+  content: "";
+}
+@keyframes alx-loading {
+  0% {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 680px) {
+  html.alx-ui .top-actions {
+    right: 16px;
+    width: min(280px, calc(100vw - 32px));
+  }
+  .alx-menu {
+    gap: 6px;
+  }
+  .alx-icon-button {
+    width: 39px;
+    height: 39px;
+  }
+  .brand small {
+    display: none;
+  }
+  .brand > span:last-child {
+    max-width: 150px;
+  }
+  .brand b {
+    font-size: 14px;
+  }
+  .hero-copy:before {
+    inset: -12% -6% -6% -6%;
+    background: rgba(250, 246, 236, 0.7);
+    border-radius: 40%;
+    filter: blur(36px);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  :root .site-shell[data-language] .hero-copy h1 {
+    font-size: clamp(36px, 10.5vw, 46px);
+  }
+  .hero-copy > p {
+    margin: 16px 0 22px;
+    font-size: 14.5px;
+    line-height: 1.85;
+  }
+  .stop-caption-card {
+    padding: 15px 16px;
+  }
+  :root .site-shell[data-language] .stop-caption-title {
+    margin: 9px 0 12px;
+    font-size: 19px;
+  }
+  .mailbox-button {
+    padding: 5px;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.alx-intro-done .is-world-ready .hero-section .hero-copy > * {
+    animation: none;
+  }
+}
+
+/* stills for the poster / share image */
+html.alx-capture .topbar,
+html.alx-capture .story-flow,
+html.alx-capture .stop-caption,
+html.alx-capture .mailbox-button,
+html.alx-capture .scroll-line,
+html.alx-capture .world-hotspot-layer,
+html.alx-capture .loader {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  transition: none !important;
+}

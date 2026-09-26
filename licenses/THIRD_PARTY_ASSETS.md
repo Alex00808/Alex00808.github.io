@@ -17,3 +17,11 @@
 - 来源：https://www.patreon.com/posts/butterfly-113850393
 - 许可：CC0
 - 调整：保留模型动画，使用原素材内的三种翅膀配色，并按本网站比例和飞行路线重新编排。
+
+## Noto Serif SC（思源宋体）
+
+- 作者：Adobe / Google（Noto CJK 项目）
+- 用途：标题与点缀文字的衬线字体
+- 来源：https://github.com/notofonts/noto-cjk
+- 许可：SIL Open Font License 1.1（全文见 `NotoSerifSC-OFL.txt`）
+- 调整：只保留本网站用到的约 590 个字符，打包为 `assets/fonts/noto-serif-sc-500.woff2` 与 `noto-serif-sc-700.woff2`，并放在本站自托管（国内访问不依赖 Google Fonts）。
