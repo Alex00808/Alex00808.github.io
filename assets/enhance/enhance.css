@@ -811,6 +811,12 @@ html.alx-over-chimney .hero-section {
   }
 }
 
+/* keep the poster up until the 3D world has actually drawn a frame (slow first shader compile) */
+html.alx-world-live:not(.alx-drawn) .loader.is-hidden {
+  visibility: visible;
+  opacity: 1;
+}
+
 /* ---------- Small screens ---------- */
 
 @media (max-width: 680px) {

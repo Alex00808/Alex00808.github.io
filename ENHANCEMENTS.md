@@ -55,6 +55,12 @@
 
 `_next/static/css/fc9c9338affae790.css` 里只把两张云雾图改成了 `.webp`。
 
+## 安全措施
+
+- `enhance.js` 的三个接口都包了 try/catch：视觉增强出错时只会关掉自己，不会拖垮 3D 渲染循环。
+- 移轴模糊写在调色着色器里，用 `/*ALX_TILT*/ … /*ALX_TILT_END*/` 标记。如果某个显卡或浏览器编译失败，脚本会自动去掉这段、重新编译原本的调色，并在控制台打印 `[alex-world]` 提示。
+- 加载海报会一直保持显示，直到 3D 真正画出第一帧，最多等 15 秒，避免出现空白页面。
+
 ## 迁回源码
 
 1. 把 `assets/enhance`、`assets/fonts`、`assets/og-cover.jpg`、所有 `.webp` 放进源码的 `public/`。
