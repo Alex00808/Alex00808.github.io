@@ -55,6 +55,177 @@
     return copy[id] ? id : "zh";
   };
 
+  /* CAMERA_PATH_START */
+  // The camera journey as one continuous curve through composed shots.
+  // Geometry: centripetal Catmull-Rom through camera positions and look-at targets.
+  // Timing: scroll progress -> "perceived distance" travelled, via a monotone cubic through
+  // anchors, so moves ease in and out of each stop and keep an even visual pace in between.
+  function createCameraPath() {
+    // [camera position, look-at target, scroll progress anchor (null = timed by distance)]
+    const SHOTS = [
+      [[-10.8, 6.6, 18.8], [0, 2.1, 0], 0], // opening shot
+      [[-10.25, 6.45, 18.2], [0, 2.08, 0.05], 0.025], // gentle drift while the title is up
+      [[-5.385, 5.492, 15.109], [0, 2.014, 0.473], null],
+      [[-1.266, 4.191, 11.906], [0, 1.696, 1.951], null],
+      [[0, 3.65, 10.8], [0, 1.52, 2.75], null],
+      [[2.054, 3.047, 8.729], [0.211, 1.478, 1.483], null],
+      [[2.64, 2.71, 7.42], [0.33, 1.455, 0.76], 0.198], // the door swings open
+      [[2.713, 2.65, 7.175], [0.35, 1.45, 0.65], 0.228],
+      [[1.5, 2.3, 5.55], [0.12, 1.4, -0.25], null],
+      [[0.3, 2.0, 3.75], [0, 1.4, -0.55], null], // through the doorway
+      [[0.2, 1.9, 1.35], [0, 1.35, -0.65], null],
+      [[-2.7, 2.45, 0.8], [-2.15, 1.15, -1.4], 0.352], // sofa: "hi, I'm Alex"
+      [[-2.667, 2.372, 0.668], [-2.15, 1.15, -1.4], 0.384],
+      [[2.9, 2.75, 0.6], [0, 2.4, -2.72], 0.455], // gallery wall
+      [[2.755, 2.733, 0.434], [0, 2.4, -2.72], 0.482],
+      [[-2.8, 2.5, -0.1], [2.4, 1.55, -2.3], 0.556], // bookcase
+      [[-2.54, 2.453, -0.21], [2.4, 1.55, -2.3], 0.588],
+      [[0.15, 2.08, 0.62], [3.7, 1.5, 0.3], null], // turn to the back door
+      [[2.45, 1.74, 0.36], [6.4, 1.55, -0.2], 0.646], // door fully open by 0.648
+      [[5.2, 1.8, 0.25], [6.7, 1.9, -6.3], 0.674], // outside before the walls return (0.662-0.668)
+      [[6.5, 2.3, -3.0], [0.5, 2.35, -11.6], null],
+      [[4.6, 1.5, -3.8], [0.3, 2.1, -12.2], 0.728], // dream tree
+      [[3.8, 1.18, -4.55], [0, 2.35, -12.5], null],
+      [[2.85, 1.35, -5.15], [-0.1, 2.65, -12.4], 0.878],
+      [[2.65, 2.0, -4.8], [-0.05, 2.75, -11.8], 0.902], // rise, and fly home over the roof
+      [[1.4, 5.8, -3.9], [-0.2, 2.4, -11.4], null],
+      [[0.4, 12.5, 2.5], [0, 1.4, -8], null],
+      [[-1.8, 13, 9.5], [0, 1.6, -3], null],
+      [[-5.8, 10.8, 14.6], [0, 1.9, -1], null],
+      [[-9.2, 8.3, 17.8], [0, 2.1, 0], null],
+      [[-10.8, 6.6, 18.8], [0, 2.1, 0], 0.995],
+    ];
+    const n = SHOTS.length;
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+    const len = (a) => Math.hypot(a[0], a[1], a[2]);
+    const pt = (list, i) => {
+      if (i >= 0 && i < n) return list[i];
+      // extrapolate past the ends so the first/last segments keep their direction
+      const a = i < 0 ? list[0] : list[n - 1];
+      const b = i < 0 ? list[1] : list[n - 2];
+      return [2 * a[0] - b[0], 2 * a[1] - b[1], 2 * a[2] - b[2]];
+    };
+    const positions = SHOTS.map((s) => s[0]);
+    const targets = SHOTS.map((s) => s[1]);
+
+    // centripetal Catmull-Rom (Barry-Goldman), segment i -> i+1, local u in [0, 1]
+    function catmull(list, i, u, out) {
+      const p0 = pt(list, i - 1), p1 = pt(list, i), p2 = pt(list, i + 1), p3 = pt(list, i + 2);
+      const t0 = 0;
+      const t1 = t0 + Math.pow(Math.max(len(sub(p1, p0)), 1e-4), 0.5);
+      const t2 = t1 + Math.pow(Math.max(len(sub(p2, p1)), 1e-4), 0.5);
+      const t3 = t2 + Math.pow(Math.max(len(sub(p3, p2)), 1e-4), 0.5);
+      const t = t1 + (t2 - t1) * u;
+      for (let k = 0; k < 3; k += 1) {
+        const a1 = ((t1 - t) * p0[k] + (t - t0) * p1[k]) / (t1 - t0);
+        const a2 = ((t2 - t) * p1[k] + (t - t1) * p2[k]) / (t2 - t1);
+        const a3 = ((t3 - t) * p2[k] + (t - t2) * p3[k]) / (t3 - t2);
+        const b1 = ((t2 - t) * a1 + (t - t0) * a2) / (t2 - t0);
+        const b2 = ((t3 - t) * a2 + (t - t1) * a3) / (t3 - t1);
+        out[k] = ((t2 - t) * b1 + (t - t1) * b2) / (t2 - t1);
+      }
+      return out;
+    }
+
+    // sample the curve and measure how much the picture changes along it
+    const STEPS = 160;
+    const uAt = []; // global parameter (segment + local u)
+    const sAt = []; // cumulative perceived distance
+    const pos = [0, 0, 0], tgt = [0, 0, 0];
+    let prevDir = null, prevPos = null, acc = 0;
+    for (let i = 0; i < n - 1; i += 1) {
+      for (let j = i === 0 ? 0 : 1; j <= STEPS; j += 1) {
+        const u = j / STEPS;
+        catmull(positions, i, u, pos);
+        catmull(targets, i, u, tgt);
+        const d = sub(tgt, pos);
+        const dist = Math.max(len(d), 0.6);
+        const dir = [d[0] / dist, d[1] / dist, d[2] / dist];
+        if (prevDir) {
+          const dot = dir[0] * prevDir[0] + dir[1] * prevDir[1] + dir[2] * prevDir[2];
+          const cross = len([
+            dir[1] * prevDir[2] - dir[2] * prevDir[1],
+            dir[2] * prevDir[0] - dir[0] * prevDir[2],
+            dir[0] * prevDir[1] - dir[1] * prevDir[0],
+          ]);
+          acc += Math.atan2(cross, dot) + len(sub(pos, prevPos)) / dist + 1e-5;
+        }
+        prevDir = dir;
+        prevPos = pos.slice();
+        uAt.push(i + u);
+        sAt.push(acc);
+      }
+    }
+    const sOfShot = (i) => sAt[i * STEPS];
+
+    // monotone cubic (Fritsch-Carlson) from scroll progress to perceived distance
+    const anchors = [];
+    SHOTS.forEach((s, i) => {
+      if (s[2] !== null) anchors.push([s[2], sOfShot(i)]);
+    });
+    anchors.push([1, sOfShot(n - 1)]);
+    const m = anchors.length;
+    const secant = [];
+    for (let i = 0; i < m - 1; i += 1) {
+      secant.push((anchors[i + 1][1] - anchors[i][1]) / (anchors[i + 1][0] - anchors[i][0]));
+    }
+    const slope = anchors.map((_, i) => {
+      if (i === 0) return secant[0] * 0.25; // start almost still
+      if (i === m - 1) return 0;
+      const a = secant[i - 1], b = secant[i];
+      if (a <= 0 || b <= 0) return 0;
+      const h0 = anchors[i][0] - anchors[i - 1][0], h1 = anchors[i + 1][0] - anchors[i][0];
+      const w1 = 2 * h1 + h0, w2 = h1 + 2 * h0;
+      return (w1 + w2) / (w1 / a + w2 / b);
+    });
+    function distanceAt(p) {
+      if (p <= anchors[0][0]) return anchors[0][1];
+      if (p >= anchors[m - 1][0]) return anchors[m - 1][1];
+      let i = 0;
+      while (i < m - 2 && p > anchors[i + 1][0]) i += 1;
+      const h = anchors[i + 1][0] - anchors[i][0];
+      const t = (p - anchors[i][0]) / h, t2 = t * t, t3 = t2 * t;
+      return (2 * t3 - 3 * t2 + 1) * anchors[i][1] + (t3 - 2 * t2 + t) * h * slope[i] +
+        (-2 * t3 + 3 * t2) * anchors[i + 1][1] + (t3 - t2) * h * slope[i + 1];
+    }
+    function paramAt(s) {
+      let lo = 0, hi = sAt.length - 1;
+      if (s <= sAt[0]) return uAt[0];
+      if (s >= sAt[hi]) return uAt[hi];
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (sAt[mid] < s) lo = mid; else hi = mid;
+      }
+      const f = (s - sAt[lo]) / Math.max(sAt[hi] - sAt[lo], 1e-9);
+      return uAt[lo] + (uAt[hi] - uAt[lo]) * f;
+    }
+    const smooth = (a, b, v) => {
+      const x = Math.max(0, Math.min(1, (v - a) / (b - a)));
+      return x * x * x * (x * (6 * x - 15) + 10);
+    };
+    return {
+      shots: SHOTS,
+      distanceAt,
+      pose(p, small, outPos, outTarget) {
+        const g = paramAt(distanceAt(p));
+        const i = Math.min(n - 2, Math.floor(g));
+        const u = g - i;
+        catmull(positions, i, u, outPos);
+        catmull(targets, i, u, outTarget);
+        if (small) {
+          // narrow screens: step a little closer to the dream tree (as the original did)
+          const z = smooth(0.69, 0.735, p) * (1 - smooth(0.9, 0.93, p));
+          outPos[0] -= 0.15 * z;
+          outPos[1] += 0.08 * z;
+          outPos[2] -= 0.55 * z;
+          outTarget[1] += 0.1 * z;
+        }
+        return g;
+      },
+    };
+  }
+  /* CAMERA_PATH_END */
+
   /* ------------------------------------------------------------------ */
   /* 3D hooks                                                            */
   /* ------------------------------------------------------------------ */
@@ -73,7 +244,34 @@
     frames: 0,
     broken: false,
     probe: { nextAt: 12, done: false, steps: 0, lit: null },
+    spring: { x: null, v: 0 },
+    path: null,
+    pathPos: [0, 0, 0],
+    pathTarget: [0, 0, 0],
   };
+
+  // Scroll progress glides on a critically damped spring, so wheel notches and flicks become
+  // one continuous move instead of steps. Big jumps (restart, Home/End) cut straight there.
+  const SPRING = 6.5;
+  function progress(raw, dt) {
+    const sp = world.spring;
+    if (sp.x === null || reducedMotion.matches || capture || Math.abs(raw - sp.x) > 0.3) {
+      sp.x = raw;
+      sp.v = 0;
+      return raw;
+    }
+    const steps = 4;
+    const h = Math.min(dt || 1 / 60, 0.1) / steps;
+    for (let i = 0; i < steps; i += 1) {
+      sp.v += (SPRING * SPRING * (raw - sp.x) - 2 * SPRING * sp.v) * h;
+      sp.x += sp.v * h;
+    }
+    if (Math.abs(raw - sp.x) < 1e-5 && Math.abs(sp.v) < 1e-4) {
+      sp.x = raw;
+      sp.v = 0;
+    }
+    return Math.max(0, Math.min(1, sp.x));
+  }
 
   // Never let a presentation effect take the 3D world down with it.
   function reportOnce(label, error) {
@@ -144,6 +342,7 @@
     }
     world.chimney.scratch = new V3();
     if (ctx.scene.fog) world.fogBase = { near: ctx.scene.fog.near, far: ctx.scene.fog.far };
+    world.path = createCameraPath();
     root.classList.add("alx-world-live");
   }
 
@@ -188,6 +387,14 @@
     const dt = Math.min(0.1, (now - world.lastTime) / 1000);
     world.lastTime = now;
     const t = world.tmp;
+
+    // The journey: one continuous curve through the composed shots (see createCameraPath).
+    if (world.path) {
+      world.path.pose(progress, smallScreen.matches, world.pathPos, world.pathTarget);
+      cam.position.fromArray(world.pathPos);
+      target.fromArray(world.pathTarget);
+      cam.lookAt(target);
+    }
 
     // Intro: arc down from high above the hills onto the opening shot.
     const k = introProgress(dt);
@@ -366,6 +573,15 @@
     camera: guard("camera", camera),
     frame: guard("frame", frame),
     after: guard("after", after),
+    progress(raw, dt) {
+      if (world.broken) return raw;
+      try {
+        return progress(raw, dt);
+      } catch (error) {
+        reportOnce("progress", error);
+        return raw;
+      }
+    },
   };
   if (window.__alexWorldCtx) window.__alexWorld.init(window.__alexWorldCtx);
 
