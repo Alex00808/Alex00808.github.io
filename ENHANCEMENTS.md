@@ -51,6 +51,7 @@
    - `iW()` 之后：`window.__alexWorldCtx = { three, scene, camera, renderer, lamp: n3, lampHalo: at, chimney: tR, grade: () => iO, composer: () => iR }`，并调用 `window.__alexWorld.init(ctx)`。
    - 每帧 `camera.lookAt(target)` 之后、热点投影之前：`window.__alexWorld.camera(camera, target, progress, night)`（用于开场镜头和视差）。
    - 每帧渲染之前：`window.__alexWorld.frame(progress, night, dt)`（用于移轴、雾、吊灯淡出、烟囱位置、声音）。
+   - 每帧渲染之后：`window.__alexWorld.after()`（像素检查）；另外 `ctx.setQuality(q)` 可以切换画质（0/1/2）。
    - 页面组件第一个 `useEffect` 里插入 `<script src="./assets/enhance/enhance.js">`。
 
 `_next/static/css/fc9c9338affae790.css` 里只把两张云雾图改成了 `.webp`。
@@ -59,7 +60,9 @@
 
 - `enhance.js` 的三个接口都包了 try/catch：视觉增强出错时只会关掉自己，不会拖垮 3D 渲染循环。
 - 移轴模糊写在调色着色器里，用 `/*ALX_TILT*/ … /*ALX_TILT_END*/` 标记。如果某个显卡或浏览器编译失败，脚本会自动去掉这段、重新编译原本的调色，并在控制台打印 `[alex-world]` 提示。
-- 加载海报会一直保持显示，直到 3D 真正画出第一帧，最多等 15 秒，避免出现空白页面。
+- 最后一道调色的输出强制完全不透明（`vec4(color, 1.0)`）。macOS 上的 Safari 27 会把 WebGL 画布的透明度也合成到页面上，原来透传的透明度导致 3D 完全看不见，只剩页面背景色；`?quality=low` 不经过后期处理，所以正常。
+- 渲染后读一行屏幕像素检查：如果后期处理的输出仍是空的，就自动降一级画质（关掉 GTAO → 关掉全部后期），直到画面出现。
+- 加载海报会一直保持显示，直到上面的检查通过、3D 真正画出画面，最多等 15 秒，避免出现空白页面。
 
 ## 迁回源码
 
