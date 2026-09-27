@@ -72,6 +72,7 @@
     lastTime: performance.now(),
     frames: 0,
     broken: false,
+    probe: { nextAt: 12, done: false, steps: 0, lit: null },
   };
 
   // Never let a presentation effect take the 3D world down with it.
@@ -235,12 +236,13 @@
     if (!ctx) return;
     const cam = ctx.camera;
 
-    // The frame hook runs just before each render, so by the 3rd call at least two frames are on screen.
+    // The frame hook runs just before each render, so by the 3rd call at least two frames were drawn.
     world.frames += 1;
     if (world.frames === 3 || world.frames === 40 || world.frames === 200) {
       if (checkShaders(ctx)) world.frames = 0;
     }
-    if (!world.drawn && world.frames >= 3) {
+    // only reveal the world once the pixel probe (see after()) confirms something reached the screen
+    if (!world.drawn && world.frames >= 3 && world.probe.done) {
       world.drawn = true;
       root.classList.add("alx-drawn");
     }
@@ -322,10 +324,48 @@
     if (sound.enabled) sound.update(progress, night);
   }
 
+  // Right after a render, look at what actually reached the screen. Some GPU/browser combinations
+  // (seen on Safari 27, Intel Mac) run the post-processing chain without errors yet show nothing;
+  // if the picture is empty, step the effects down until it isn't (the plain renderer always works).
+  let probeRow = null;
+  function after() {
+    const ctx = world.ctx;
+    const probe = world.probe;
+    if (!ctx || probe.done || world.frames < probe.nextAt) return;
+    const composer = ctx.composer && ctx.composer();
+    if (!composer || !ctx.setQuality) {
+      probe.done = true;
+      return;
+    }
+    const gl = ctx.renderer.getContext();
+    const w = gl.drawingBufferWidth;
+    const h = gl.drawingBufferHeight;
+    // one read of a single row across the middle of the picture (a GPU readback stalls, so keep it to one)
+    if (!probeRow || probeRow.length !== w * 4) probeRow = new Uint8Array(w * 4);
+    gl.readPixels(0, Math.floor(h * 0.55), w, 1, gl.RGBA, gl.UNSIGNED_BYTE, probeRow);
+    let lit = 0;
+    for (let i = 0; i < w; i += 8) {
+      const o = i * 4;
+      if (probeRow[o] + probeRow[o + 1] + probeRow[o + 2] > 12 && probeRow[o + 3] > 12) lit += 1;
+    }
+    probe.lit = lit;
+    if (lit > 0) {
+      probe.done = true;
+      return;
+    }
+    const next = composer.passes.length >= 5 ? 1 : 0;
+    probe.steps += 1;
+    probe.nextAt = world.frames + 20;
+    if (window.console) console.warn("[alex-world] post-processing output is empty on this device; switching to quality " + next);
+    ctx.setQuality(next);
+    if (next === 0) probe.done = true;
+  }
+
   window.__alexWorld = {
     init: guard("init", init),
     camera: guard("camera", camera),
     frame: guard("frame", frame),
+    after: guard("after", after),
   };
   if (window.__alexWorldCtx) window.__alexWorld.init(window.__alexWorldCtx);
 
@@ -369,6 +409,7 @@
         lines.push("frames: " + world.frames + "  fps~" + fps + "  drawn: " + !!world.drawn + "  intro: " + world.intro.state + "  noTilt: " + !!world.noTilt + "  broken: " + world.broken);
         const composer = ctx.composer && ctx.composer();
         lines.push("composer: " + (composer ? composer.passes.map((p) => p.constructor.name || "pass").join(" > ") : "none (quality low)"));
+        lines.push("probe: lit " + world.probe.lit + "  steps " + world.probe.steps + "  done " + world.probe.done);
         lines.push("render: calls " + info.render.calls + " tris " + info.render.triangles + "  textures " + info.memory.textures + "  programs " + info.programs.length);
         info.programs
           .filter((p) => p.diagnostics && p.diagnostics.runnable === false)
